@@ -1,53 +1,172 @@
 <?php
 //simple Dom Parser
 include "simple_html_dom.php";
+include "db.php";
 
 // Defining the basic cURL function
-function curl($url) {
+function curl($url)
+{
     // Assigning cURL options to an array
-    $options = Array(
-        CURLOPT_RETURNTRANSFER => TRUE,  // Setting cURL's option to return the webpage data
-        CURLOPT_FOLLOWLOCATION => TRUE,  // Setting cURL to follow 'location' HTTP headers
-        CURLOPT_AUTOREFERER => TRUE, // Automatically set the referer where following 'location' HTTP headers
-        CURLOPT_CONNECTTIMEOUT => 120,   // Setting the amount of time (in seconds) before the request times out
-        CURLOPT_TIMEOUT => 120,  // Setting the maximum amount of time for cURL to execute queries
-        CURLOPT_MAXREDIRS => 10, // Setting the maximum number of redirections to follow
-        CURLOPT_USERAGENT => "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1a2pre) Gecko/2008073000 Shredder/3.0a2pre ThunderBrowse/3.2.1.8",  // Setting the useragent
-        CURLOPT_URL => $url, // Setting cURL's URL option with the $url variable passed into the function
-    );
+    $options = [CURLOPT_RETURNTRANSFER => true,
+                // Setting cURL's option to return the webpage data
+                CURLOPT_FOLLOWLOCATION => true,
+                // Setting cURL to follow 'location' HTTP headers
+                CURLOPT_AUTOREFERER    => true,
+                // Automatically set the referer where following 'location' HTTP headers
+                CURLOPT_CONNECTTIMEOUT => 260,
+                // Setting the amount of time (in seconds) before the request times out
+                CURLOPT_TIMEOUT        => 120,
+                // Setting the maximum amount of time for cURL to execute queries
+                CURLOPT_MAXREDIRS      => 12,
+                // Setting the maximum number of redirections to follow
+                CURLOPT_USERAGENT      => "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1a2pre) Gecko/2008073000 Shredder/3.0a2pre ThunderBrowse/3.2.1.8",
+                // Setting the useragent
+                CURLOPT_URL            => $url,
+                // Setting cURL's URL option with the $url variable passed into the function
+    ];
     
     $ch = curl_init();  // Initialising cURL
     curl_setopt_array($ch, $options);   // Setting cURL's options using the previously assigned array data in $options
     $data = curl_exec($ch); // Executing the cURL request and assigning the returned data to the $data variable
     curl_close($ch);    // Closing cURL
+    
     return $data;   // Returning the data from the function
 }
 
 //franchise list
-$response = curl('https://www.franchisegator.com/search.php?industry=13&state=International&investment=');
+$response = curl('https://www.franchisegator.com/search.php?industry=13');//main site url - this is the website the  function will scrap from
+error_reporting(0);
+//this initialize the simple dom
 
+//main site
 $html = new simple_html_dom();
+//business profiles
 $html2 = new simple_html_dom();
-$html->load($response);
 
+$html->load($response);//parsing the main site
+$number = 0;
+
+//looping through the parsed site, and getting each element
 foreach($html->find('div[id^=franchise-tile]') as $link){
-//    $item['image'] = $link->find('img[itemprop^=logo]', 0)->src;
-    $item = $link->find('a[itemprop^=url]',0)->href;
-//    $item['min_cash'] = str_replace('<i class="fa fa-money fa-2x"></i>','',$link->find('div.concept-cost',0)->innertext);
-//    $item['description'] = $link->find('p[itemprop^=description]', 0)->innertext;
-//    $business[] = $item;
-    echo $item;
-     $inner = curl('https://www.franchisegator.com/'.strtolower($item));
-     $html2->load($inner);
-     foreach($html2 as $element){
-         $itm['image'] = $element->find('img[itemprop^=logo]', 0)->src;
-         $itm['title'] = $element->
-     };
+    $item             = $link->find('a[itemprop^=url]', 0)->href;//getting all the href inner text from <a itemprop="name"> tags
+    $franchise_url [] = $item;
+}
+
+//print_r($franchise_url);
+
+//Getting the profiles
+foreach($franchise_url as $url){
+    $res = curl('https://www.franchisegator.com' . $url);
+    $html2->load($res);
+    foreach($html2->find('div[class^=container]') as $element){
+        $itm['img']                = $element->find('img[itemprop^=logo]', 0)->src;
+        $itm['title']              = $element->find('div.concept-name h1', 0)->innertext;
+        $itm['category']           = 67;//category ID
+        $itm['email']              = str_replace(' ', '', $itm['title']) . '@email.com';
+        $itm['first-name']         = $itm['title'];
+        $itm['last-name']          = 'Company';
+        $itm['password']           = 'expobusiness';
+        $itm['country']            = 209; //united states
+        $itm['phone']              = '18662572973';
+        $itm['property-type']      = 'franchise';
+        $itm['building']            = $itm['country'];
+        $itm['street']            = $itm['country'];
+        $itm['landmark']            = $itm['country'];
+        $itm['area']            = $itm['country'];
+        $itm['zipcode']            = "00000";
+        $itm['preferred-location'] = $itm['headquarters'];
+        $itm['commission']         = str_replace(['$', ','], ['',
+                                                              ''], $element->find('div[id^=concept-cost] table tr td', 1)->innertext);
+        $itm['franchise-fee']     = str_replace(['$', ','], ['',
+                                                              ''], $element->find('div[id^=concept-cost] table tr td', 1)->innertext);
+        $tr                        = $element->find('div[id^=concept-cost] table tr td', 3)->innertext;
+        
+        if($tr != ''){
+            
+          $_tr = explode('-',str_replace(['Estimated:','plus working capital','$',','],'',$tr));
+          $itm['min-amount'] = $_tr[0];
+          if($itm['max-amount'] != ''){
+              $itm['max-amount'] = $_tr[1];
+          } else {
+              $itm['max-amount'] = $itm['min-amount'];
+          }
+        }
+        
+        if($itm['founded'] == ''){
+            $itm['founded'] = 0000;
+        }else {
+            $itm['founded'] = $element->find('td[itemprop^=foundingDate]', 0)->innertext; //foundation year
+        }
+        if($itm['headquarters'] == ''){
+            $itm['headquarters'] = $itm['country'];
+        }else {
+            $itm['headquarters'] = $element->find('td[itemprop^=foundingLocation]', 0)->innertext;
+        }
+        
+        $itm['description'] = $element->find('div[itemprop^=description]', 0)->innertext;
+        
+        if($itm['img'] != '' && $itm['title'] && $itm['description'] != ''){
+            $franchises[] = $itm;
+        }
+    }
+}
+//inner info
+//print_r($franchises[0]);
+//print_r($arreglo);
+
+foreach($franchises as $franchise ){
+    $detail =  $conn->real_escape_string($franchise['description']);
+   $set = "fname ='".$franchise['first-name']."'";
+   $set.= ",lname ='".$franchise['last-name']."'";
+   $set.= ",password ='".$franchise['password']."'";
+   $set.= ",email ='".$franchise['email']."'";
+   $set.= ",contact_no1 ='".$franchise['phone']."'";
+   $set.= ",building ='".$franchise['building']."'";
+   $set.= ",street ='".$franchise['street']."'";
+   $set.= ",landmark ='".$franchise['landmark']."'";
+   $set.= ",area ='".$franchise['area']."'";
+   $set.= ",country ='".$franchise['country']."'";
+   $set.= ",zip_code ='".$franchise['zipcode']."'";
+   $set.= ",title ='".$franchise['title']."'";
+   $set.= ",category ='".$franchise['category']."'";
+   $set.= ",establishment_yr ='".$franchise['founded']."'";
+   $set.= ",launched_yr ='".$franchise['founded']."'";
+   $set.= ",headquater ='".$franchise['headquarters']."'";
+   $set.= ",area_req = 0";
+   $set.= ",investment ='".$franchise['min-amount']."-".$franchise['max-amount']."'";
+   $set.= ",brand_fee ='".$franchise['franchise-fee']."'";
+   $set.= ",commission ='".$franchise['commission']."'";
+   $set.= ",expan_location ='".$franchise['preferred-location']."'";
+   $set.= ",training_loc ='".$franchise['preferred-location']."'";
+   $set.= ",property_type ='".$franchise['property-type']."'";
+   $set.= ",preferred_loc ='".$franchise['preferred-location']."'";
+   $set.= ",img ='".$franchise['img']."'";
+   $set.= ",user_role = 1";
+   $set.= ",lawyer_status = 2";
+   $set.= ",active_status = 1";
+   $set.= ",email_active_status = 1";
+   $set.= ",overall_rate = 0";
+   $set.= ",field_assit = 0";
+   $set.= ",floor_area = 'n/a'";
+   $set.= ",crcdt ='".date('Y-m-d h:i:s')."'";
+   $set.= ",chngdt = '".date('Y-m-d h:i:s')."'";
+   $set.= ",last_login_date ='".date('Y-m-d h:i:s')."'";
+   $set.= ",last_logout_date = '0'";
+   $set.= ",reg_ip ='190.24.45.227'";
+   $set.= ",edit_ip ='190.24.45.227'";
+//   $set.= ',detail ="'.$franchise['description'].'"';
+   $set.= ",detail = '".$detail."'";
+   
+   $sql = "insert into register set $set";
 }
 
 
+if ($conn->multi_query($sql) === TRUE) {
+    echo "New records created successfully";
+} else {
+    echo "Error: " . $sql . "<br>" . $conn->error;
+}
 
-//inner info
-
+$conn->close();
 ?>
 
