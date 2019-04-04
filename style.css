@@ -42,11 +42,24 @@ body{
 }
 
 .message-wrapper{
-    padding: 30px 40px;
 }
 .row.border-w{
     padding: 30px 40px;
 }
 .border-w{
     border: 1px solid #ededed;
+}
+
+#scrapper-result .wrap h3{
+    font-size: 22px;
+}
+.result-list{
+    list-style: none;
+    padding: 0;
+}
+
+.result-list li {
+    padding: 10px;
+    background: #fafafa;
+    border-bottom: 1px solid #ededed;
 }

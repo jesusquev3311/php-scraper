@@ -6,8 +6,12 @@ $total_count    = 0;
 $total_errors   = 0;
 $category       = htmlspecialchars($_POST['franchise_cat']);
 $main_URL       = htmlspecialchars($_POST['webite_url']);
+$q = "SELECT category_name FROM category WHERE id='$category' limit 1";
+$res =$conn ->query($q);
+$value = $res->fetch_assoc();
+$cat_name =$value['category_name'];
 $result_message = [];
-$result_errors = [];
+$result_errors  = [];
 
 // Defining the basic cURL function
 function curl($url)
@@ -38,6 +42,7 @@ function curl($url)
     
     return $data;   // Returning the data from the function
 }
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -233,7 +238,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
             $category         = $franchise['category'];
             $result_message[] = "<li>New Record Created Successfully - " . $franchise['title'] . "</li>";
         }else {
-            $result_errors[] = "<li style='color: #FF738B'>Error: ".$franchise['title']."</li>";
+            $result_errors[] = "<li style='color: #FF738B'>Error Record Not Created - " . $franchise['title'] . "</li>";
             $total_errors++;
         }
     }
@@ -254,7 +259,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     <h3 style="color: #FF738B">Total Errors: <?= $total_errors ?></h3>
                 </div>
                 <div class="col-sm-4">
-                    <h3 style="color: #D8F793">Category: <?= $cat_name ?></h3>
+                    <h3 style="color: #A1CDF1">Category: <?= $cat_name ?></h3>
                 </div>
             </div>
 
@@ -273,9 +278,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
                     </div>
                 </div>
             </div>
-
         </div>
-    </div>
     </div>
 </section>
 
