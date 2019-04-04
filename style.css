@@ -1,0 +1,52 @@
+body{
+    background-color: #A1CDF1;
+    color: #2D3142;
+}
+
+.section-wrapper .container{
+   background-color: #fff;
+    padding: 30px 40px;
+    margin-top: 60px;
+    text-align: center;
+    border-radius: 10px;
+    margin-bottom: 60px;
+}
+
+.section-wrapper h1{
+    margin: 30px 0px 60px 0px;
+}
+
+#scrapper-form .btn{
+    background-color: #5ED1B1;
+    border-color: #5ED1B1;
+    margin-top: 24px;
+}
+
+#scrapper-form form{
+    width: 100%;
+}
+#scrapper-form form .row{
+    display: flex;
+    align-items: center;
+}
+
+#scrapper-form label{
+    color: #FF738B;
+    text-align: left;
+    display: block;
+}
+
+.section-wrapper h4{
+    display: block;
+    margin: 30px 0;
+}
+
+.message-wrapper{
+    padding: 30px 40px;
+}
+.row.border-w{
+    padding: 30px 40px;
+}
+.border-w{
+    border: 1px solid #ededed;
+}
