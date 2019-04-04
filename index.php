@@ -253,7 +253,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         <div class="wrap">
             <div class="row border-w">
                 <div class="col-sm-4">
-                    <h3 style="color: #5ED1B1">Total Count: <?= $total_count ?></h3>
+                    <h3 style="color: #5ED1B1">Total Added: <?= $total_count ?></h3>
                 </div>
                 <div class="col-sm-4">
                     <h3 style="color: #FF738B">Total Errors: <?= $total_errors ?></h3>
